@@ -8,7 +8,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import CustomNode from './CustomNode.vue'
 
 const store = useWorkflowStore()
-const { project, addSelectedElements, onNodesChange } = useVueFlow()
+const { project, addSelectedElements, onNodesChange, fitView } = useVueFlow()
 
 const contextMenu = ref({
     visible: false,
@@ -21,6 +21,11 @@ const contextMenu = ref({
 // Enable multi-selection box
 const selectionMode = ref(true)
 const selectionKeyCode = 'Shift' // Hold Shift to enable selection box
+
+const handleResize = () => {
+    // Debounce or just call fitView
+    fitView({ padding: 0.2, duration: 200 })
+}
 
 const nodes = computed({
   get: () => store.currentWorkflow?.nodes || [],
@@ -177,10 +182,19 @@ const onGlobalClick = () => {
 
 onMounted(() => {
     window.addEventListener('click', onGlobalClick)
+    window.addEventListener('resize', handleResize)
+    
+    // Initial fit view check
+    if (store.currentWorkflow) {
+        setTimeout(() => {
+            fitView({ padding: 0.2 })
+        }, 100)
+    }
 })
 
 onUnmounted(() => {
     window.removeEventListener('click', onGlobalClick)
+    window.removeEventListener('resize', handleResize)
 })
 </script>
 
