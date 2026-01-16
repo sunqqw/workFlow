@@ -56,6 +56,44 @@ export const useWorkflowStore = defineStore('workflow', {
       }
     },
 
+    async updateWorkflow(id: string, updates: Partial<Workflow>) {
+      this.loading = true
+      try {
+        const res = await api.patch(`/workflows/${id}`, updates)
+        // If we are currently editing this workflow, update local state
+        if (this.currentWorkflow && this.currentWorkflow.id === id) {
+            this.currentWorkflow = res.data
+        }
+        // Update list if present
+        const index = this.workflows.findIndex(w => w.id === id)
+        if (index > -1) {
+            this.workflows[index] = res.data
+        }
+        return res.data
+      } catch (err) {
+        console.error(err)
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async deleteWorkflow(id: string) {
+      this.loading = true
+      try {
+        await api.delete(`/workflows/${id}`)
+        this.workflows = this.workflows.filter(w => w.id !== id)
+        if (this.currentWorkflow && this.currentWorkflow.id === id) {
+            this.currentWorkflow = null
+        }
+      } catch (err) {
+        console.error(err)
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+
     async saveWorkflow() {
         if (!this.currentWorkflow) return
         try {
@@ -112,15 +150,19 @@ export const useWorkflowStore = defineStore('workflow', {
       this.saveHistory()
     },
 
-    removeNode(nodeId: string) {
+    removeNodes(nodeIds: string[]) {
       if (!this.currentWorkflow) return
-      this.currentWorkflow.nodes = this.currentWorkflow.nodes.filter(n => n.id !== nodeId)
-      this.currentWorkflow.edges = this.currentWorkflow.edges.filter(e => e.source !== nodeId && e.target !== nodeId)
-      if (this.selectedNode?.id === nodeId) {
+      this.currentWorkflow.nodes = this.currentWorkflow.nodes.filter(n => !nodeIds.includes(n.id))
+      this.currentWorkflow.edges = this.currentWorkflow.edges.filter(e => !nodeIds.includes(e.source) && !nodeIds.includes(e.target))
+      if (this.selectedNode && nodeIds.includes(this.selectedNode.id)) {
         this.selectedNode = null
       }
       this.currentWorkflow.updatedAt = Date.now()
       this.saveHistory()
+    },
+
+    removeNode(nodeId: string) {
+      this.removeNodes([nodeId])
     },
 
     addEdge(edge: WorkflowEdge) {
