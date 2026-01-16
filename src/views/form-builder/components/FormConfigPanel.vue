@@ -17,7 +17,8 @@ const fieldConfigSchema = computed(() => {
         label: { type: 'string', title: 'Label' },
         field: { type: 'string', title: 'Field Key' },
         required: { type: 'boolean', title: 'Required' },
-        placeholder: { type: 'string', title: 'Placeholder' }
+        placeholder: { type: 'string', title: 'Placeholder' },
+        width: { type: 'string', title: 'Width', enum: ['100%', '75%', '66%', '50%', '33%', '25%'] }
     }
 
     return {
@@ -37,10 +38,20 @@ const formConfigSchema = {
 }
 
 const fieldFormData = computed({
-    get: () => selectedField.value || {},
+    get: () => {
+        if (!selectedField.value) return {}
+        return {
+            ...selectedField.value,
+            width: selectedField.value.layout?.width || '100%'
+        }
+    },
     set: (val) => {
         if (selectedField.value) {
-            store.updateFieldConfig(selectedField.value.id, val)
+            const { width, ...rest } = val
+            store.updateFieldConfig(selectedField.value.id, {
+                ...rest,
+                layout: { width }
+            })
         }
     }
 })

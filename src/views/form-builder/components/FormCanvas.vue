@@ -58,13 +58,17 @@ const onDelete = (e: Event, id: string) => {
                 v-model="fields"
                 group="form-builder"
                 item-key="id"
-                class="space-y-4 min-h-[200px]"
+                class="flex flex-wrap -mx-2 min-h-[200px]"
                 ghost-class="opacity-50"
                 @add="onAdd"
             >
                 <template #item="{ element }">
                     <div 
-                        class="relative p-4 border rounded group hover:border-blue-400 cursor-pointer transition-colors bg-white"
+                        class="px-2 mb-4 relative group"
+                        :style="{ width: element.layout?.width || '100%' }"
+                    >
+                    <div 
+                        class="p-4 border rounded hover:border-blue-400 cursor-pointer transition-colors bg-white h-full"
                         :class="{'ring-2 ring-blue-500 border-blue-500': store.selectedField?.id === element.id, 'border-gray-200': store.selectedField?.id !== element.id}"
                         @click.stop="onSelect(element)"
                     >
@@ -92,6 +96,7 @@ const onDelete = (e: Event, id: string) => {
                         <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                             <el-button type="danger" circle size="small" :icon="Delete" @click="(e) => onDelete(e, element.id)" />
                         </div>
+                    </div>
                     </div>
                 </template>
             </draggable>

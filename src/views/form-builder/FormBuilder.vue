@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useFormStore } from '@/stores/form'
 import ComponentLibrary from './components/ComponentLibrary.vue'
 import FormCanvas from './components/FormCanvas.vue'
 import FormConfigPanel from './components/FormConfigPanel.vue'
+import FormPreview from './components/FormPreview.vue'
 import { ArrowLeft, View, Download } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -11,6 +12,7 @@ import { ElMessage } from 'element-plus'
 const store = useFormStore()
 const router = useRouter()
 const route = useRoute()
+const previewVisible = ref(false)
 
 onMounted(() => {
   const id = route.params.id as string
@@ -23,6 +25,10 @@ onMounted(() => {
 
 const goBack = () => {
     router.push('/')
+}
+
+const handlePreview = () => {
+    previewVisible.value = true
 }
 
 const handleSave = async () => {
@@ -52,7 +58,7 @@ const handleSave = async () => {
             <h1 class="font-bold text-gray-700">{{ store.currentForm?.name || 'Untitled Form' }}</h1>
         </div>
         <div class="flex items-center gap-2">
-            <el-button :icon="View">Preview</el-button>
+            <el-button :icon="View" @click="handlePreview">Preview</el-button>
             <el-divider direction="vertical" />
             <el-button type="primary" :icon="Download" @click="handleSave" :loading="store.loading">Save</el-button>
         </div>
@@ -77,5 +83,7 @@ const handleSave = async () => {
             <FormConfigPanel />
         </div>
     </div>
+    
+    <FormPreview v-model="previewVisible" :form="store.currentForm" />
   </div>
 </template>
