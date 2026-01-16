@@ -8,15 +8,19 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import CustomNode from './CustomNode.vue'
 
 const store = useWorkflowStore()
-const { project } = useVueFlow()
+const { project, addSelectedElements, onNodesChange } = useVueFlow()
 
 const contextMenu = ref({
     visible: false,
     x: 0,
     y: 0,
     type: null as 'node' | 'edge' | null,
-    id: null as string | null
+    id: null as string | string[] | null // Support multiple IDs
 })
+
+// Enable multi-selection box
+const selectionMode = ref(true)
+const selectionKeyCode = 'Shift' // Hold Shift to enable selection box
 
 const nodes = computed({
   get: () => store.currentWorkflow?.nodes || [],
@@ -153,7 +157,10 @@ const hideContextMenu = () => {
 }
 
 const handleDelete = () => {
-    if (contextMenu.value.type === 'node' && contextMenu.value.id) {
+    if (Array.isArray(contextMenu.value.id)) {
+        // Not used yet for context menu, but ready for batch context actions
+        store.removeNodes(contextMenu.value.id)
+    } else if (contextMenu.value.type === 'node' && contextMenu.value.id) {
         store.removeNode(contextMenu.value.id)
     } else if (contextMenu.value.type === 'edge' && contextMenu.value.id) {
         store.removeEdge(contextMenu.value.id)
@@ -190,6 +197,9 @@ onUnmounted(() => {
       @edge-click="onEdgeClick"
       @edge-context-menu="onEdgeContextMenu"
       @node-context-menu="onNodeContextMenu"
+      :selection-key-code="selectionKeyCode"
+      :multi-selection-key-code="selectionKeyCode"
+      :delete-key-code="'Backspace'"
       fit-view-on-init
       class="bg-gray-50"
     >
@@ -220,3 +230,13 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style>
+/* Selection box style */
+.vue-flow__selection {
+    background-color: rgba(0, 89, 220, 0.08);
+    border: 1px solid rgba(0, 89, 220, 0.8);
+    border-radius: 4px;
+    z-index: 1000; /* Ensure it's above other elements */
+}
+</style>
