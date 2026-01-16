@@ -4,11 +4,19 @@ import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '@/stores/workflow'
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import CustomNode from './CustomNode.vue'
 
 const store = useWorkflowStore()
 const { project } = useVueFlow()
+
+const contextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    type: null as 'node' | 'edge' | null,
+    id: null as string | null
+})
 
 const nodes = computed({
   get: () => store.currentWorkflow?.nodes || [],
@@ -25,6 +33,11 @@ const edges = computed({
 })
 
 const onConnect = (params: any) => {
+  // Validate connection: only allow Right handle (source) to Left handle (target)
+  if (params.sourceHandle !== 'source' || params.targetHandle !== 'target') {
+      return
+  }
+
   const edge = {
     ...params,
     id: `e${params.source}-${params.target}`,
@@ -102,11 +115,66 @@ const onDrop = (event: DragEvent) => {
 
 const onNodeClick = (event: any) => {
     store.selectNode(event.node)
+    hideContextMenu()
+}
+
+const onEdgeClick = (event: any) => {
+    store.selectEdge(event.edge) // Assuming we add this to store or handle locally
+    hideContextMenu()
 }
 
 const onPaneClick = () => {
     store.selectNode(null)
+    hideContextMenu()
 }
+
+const onNodeContextMenu = (event: any) => {
+    event.event.preventDefault()
+    showContextMenu(event.event.clientX, event.event.clientY, 'node', event.node.id)
+}
+
+const onEdgeContextMenu = (event: any) => {
+    event.event.preventDefault()
+    showContextMenu(event.event.clientX, event.event.clientY, 'edge', event.edge.id)
+}
+
+const showContextMenu = (x: number, y: number, type: 'node' | 'edge', id: string) => {
+    contextMenu.value = {
+        visible: true,
+        x,
+        y,
+        type,
+        id
+    }
+}
+
+const hideContextMenu = () => {
+    contextMenu.value.visible = false
+}
+
+const handleDelete = () => {
+    if (contextMenu.value.type === 'node' && contextMenu.value.id) {
+        store.removeNode(contextMenu.value.id)
+    } else if (contextMenu.value.type === 'edge' && contextMenu.value.id) {
+        store.removeEdge(contextMenu.value.id)
+    }
+    hideContextMenu()
+}
+
+// Close context menu on global click
+const onGlobalClick = () => {
+    if (contextMenu.value.visible) {
+        hideContextMenu()
+    }
+}
+
+onMounted(() => {
+    window.addEventListener('click', onGlobalClick)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('click', onGlobalClick)
+})
 </script>
 
 <template>
@@ -119,6 +187,9 @@ const onPaneClick = () => {
       @pane-click="onPaneClick"
       @connect="onConnect"
       @node-drag-stop="onNodeDragStop"
+      @edge-click="onEdgeClick"
+      @edge-context-menu="onEdgeContextMenu"
+      @node-context-menu="onNodeContextMenu"
       fit-view-on-init
       class="bg-gray-50"
     >
@@ -129,7 +200,22 @@ const onPaneClick = () => {
       <Controls />
       <MiniMap />
     </VueFlow>
-    <div v-else class="flex items-center justify-center h-full text-gray-400">
+
+    <!-- Context Menu -->
+    <div 
+        v-if="contextMenu.visible" 
+        class="fixed z-50 bg-white border border-gray-200 shadow-lg rounded-md py-1 min-w-[120px]"
+        :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+    >
+        <div 
+            class="px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 cursor-pointer flex items-center gap-2"
+            @click="handleDelete"
+        >
+            <span>Delete</span>
+        </div>
+    </div>
+
+    <div v-else-if="!store.currentWorkflow" class="flex items-center justify-center h-full text-gray-400">
       Loading...
     </div>
   </div>

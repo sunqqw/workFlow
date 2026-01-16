@@ -92,6 +92,10 @@ export const useWorkflowStore = defineStore('workflow', {
       this.selectedNode = node
     },
 
+    selectEdge(edge: WorkflowEdge | null) {
+        // Future implementation: Select edge logic
+    },
+
     updateNodePosition(nodeId: string, position: { x: number, y: number }) {
       if (!this.currentWorkflow) return
       const node = this.currentWorkflow.nodes.find(n => n.id === nodeId)
