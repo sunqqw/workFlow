@@ -25,7 +25,8 @@
     "sass": "^1.97.2",
     "tailwind-merge": "^3.3.0",
     "vue": "^3.4.15",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",

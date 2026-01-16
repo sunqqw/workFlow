@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, DataBoard } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
 const createNew = () => {
   router.push('/designer')
+}
+
+const goToFormBuilder = () => {
+    router.push('/form-builder')
 }
 </script>
 
@@ -13,8 +17,11 @@ const createNew = () => {
   <div class="p-8 bg-gray-50 min-h-screen">
     <div class="max-w-6xl mx-auto">
         <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">My Workflows</h1>
-        <el-button type="primary" size="large" :icon="Plus" @click="createNew">Create Workflow</el-button>
+            <h1 class="text-3xl font-bold text-gray-800">My Workflows</h1>
+            <div class="flex gap-3">
+                <el-button @click="goToFormBuilder" :icon="Plus">Forms</el-button>
+                <el-button type="primary" size="large" :icon="Plus" @click="createNew">Create Workflow</el-button>
+            </div>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
