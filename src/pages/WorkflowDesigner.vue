@@ -30,17 +30,7 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeyDown)
   const id = route.params.id as string
   if (id) {
-      const saved = localStorage.getItem(`workflow_${id}`)
-      if (saved) {
-          try {
-            store.setWorkflow(JSON.parse(saved))
-          } catch (e) {
-            console.error('Failed to load workflow', e)
-            store.initWorkflow()
-          }
-      } else {
-          store.initWorkflow()
-      }
+      store.fetchWorkflow(id)
   } else {
     store.initWorkflow()
   }
@@ -54,10 +44,12 @@ const goBack = () => {
     router.push('/')
 }
 
-const handleSave = () => {
-    if (store.currentWorkflow) {
-        localStorage.setItem(`workflow_${store.currentWorkflow.id}`, JSON.stringify(store.currentWorkflow))
+const handleSave = async () => {
+    try {
+        await store.saveWorkflow()
         ElMessage.success('Workflow saved successfully')
+    } catch (error) {
+        ElMessage.error('Failed to save workflow')
     }
 }
 
@@ -80,7 +72,7 @@ const handleRedo = () => store.redo()
                 <el-button :icon="RefreshRight" @click="handleRedo" :disabled="store.historyIndex >= store.history.length - 1" title="Redo" />
             </el-button-group>
             <el-divider direction="vertical" />
-            <el-button type="primary" :icon="Download" @click="handleSave">Save</el-button>
+            <el-button type="primary" :icon="Download" @click="handleSave" :loading="store.loading">Save</el-button>
         </div>
     </div>
 
@@ -92,11 +84,14 @@ const handleRedo = () => store.redo()
 
         <!-- Center: Canvas -->
         <div class="flex-1 bg-gray-100 relative">
-        <FlowCanvas />
+        <div v-if="store.loading && !store.currentWorkflow" class="absolute inset-0 flex items-center justify-center z-50 bg-white/50">
+            Loading...
+        </div>
+        <FlowCanvas v-else />
         </div>
 
         <!-- Right Sidebar: Configuration -->
-        <div class="w-80 flex-shrink-0 bg-white border-l border-gray-200">
+        <div class="w-80 flex-shrink-0 bg-white border-l border-gray-200" v-if="store.selectedNode">
         <ConfigPanel />
         </div>
     </div>

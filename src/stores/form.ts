@@ -1,27 +1,78 @@
 import { defineStore } from 'pinia'
 import type { FormTemplate, FormField } from '@/types/form'
+import api from '@/api'
 
 export const useFormStore = defineStore('form', {
   state: () => ({
     currentForm: null as FormTemplate | null,
     selectedField: null as FormField | null,
-    forms: [] as FormTemplate[] // Local storage mock
+    forms: [] as FormTemplate[],
+    loading: false
   }),
   actions: {
+    async fetchForms() {
+        this.loading = true
+        try {
+            const res = await api.get('/forms')
+            this.forms = res.data
+        } catch (err) {
+            console.error(err)
+        } finally {
+            this.loading = false
+        }
+    },
+
+    async fetchForm(id: string) {
+        this.loading = true
+        try {
+            const res = await api.get(`/forms/${id}`)
+            this.setForm(res.data)
+        } catch (err) {
+            console.error(err)
+        } finally {
+            this.loading = false
+        }
+    },
+
+    async createForm(name: string = 'New Form') {
+        this.loading = true
+        try {
+            const payload = {
+                name,
+                config: {
+                    labelPosition: 'top',
+                    submitText: 'Submit',
+                    layout: 'single'
+                },
+                fields: []
+            }
+            const res = await api.post('/forms', payload)
+            this.setForm(res.data)
+            return res.data
+        } catch (err) {
+            console.error(err)
+            throw err
+        } finally {
+            this.loading = false
+        }
+    },
+
+    async saveForm() {
+        if (!this.currentForm) return
+        try {
+            const res = await api.patch(`/forms/${this.currentForm.id}`, this.currentForm)
+            this.currentForm = res.data
+            return res.data
+        } catch (err) {
+            console.error(err)
+            throw err
+        }
+    },
+
+    // Local state management
     initForm() {
-      const id = Date.now().toString()
-      this.currentForm = {
-        id,
-        name: 'New Form',
-        config: {
-          labelPosition: 'top',
-          submitText: 'Submit',
-          layout: 'single'
-        },
-        fields: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      }
+      // Used for client-side only initialization if needed, or cleared
+      this.currentForm = null
     },
 
     setForm(form: FormTemplate) {

@@ -1,27 +1,85 @@
 import { defineStore } from 'pinia'
 import type { Workflow, WorkflowNode, WorkflowEdge, ValidationError } from '@/types/workflow'
+import api from '@/api'
 
 export const useWorkflowStore = defineStore('workflow', {
   state: () => ({
     currentWorkflow: null as Workflow | null,
     selectedNode: null as WorkflowNode | null,
     history: [] as Workflow[],
-    historyIndex: -1
+    historyIndex: -1,
+    workflows: [] as Workflow[],
+    loading: false
   }),
   actions: {
-    initWorkflow() {
-      const id = Date.now().toString()
-      this.currentWorkflow = {
-        id,
-        name: 'New Workflow',
-        nodes: [],
-        edges: [],
-        viewport: { x: 0, y: 0, zoom: 1 },
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+    async fetchWorkflows() {
+      this.loading = true
+      try {
+        const res = await api.get('/workflows')
+        this.workflows = res.data
+      } catch (err) {
+        console.error(err)
+      } finally {
+        this.loading = false
       }
-      this.history = [JSON.parse(JSON.stringify(this.currentWorkflow))]
-      this.historyIndex = 0
+    },
+
+    async fetchWorkflow(id: string) {
+      this.loading = true
+      try {
+        const res = await api.get(`/workflows/${id}`)
+        this.setWorkflow(res.data)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async createWorkflow(name: string = 'New Workflow') {
+      this.loading = true
+      try {
+        const payload = {
+            name,
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 }
+        }
+        const res = await api.post('/workflows', payload)
+        this.setWorkflow(res.data)
+        return res.data
+      } catch (err) {
+        console.error(err)
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async saveWorkflow() {
+        if (!this.currentWorkflow) return
+        try {
+            const res = await api.patch(`/workflows/${this.currentWorkflow.id}`, this.currentWorkflow)
+            // Update current workflow with server response (e.g. updated timestamp)
+            // Preserve selection
+            const selectedId = this.selectedNode?.id
+            this.currentWorkflow = res.data
+            if (selectedId) {
+                this.selectedNode = this.currentWorkflow?.nodes.find(n => n.id === selectedId) || null
+            }
+            return res.data
+        } catch (err) {
+            console.error(err)
+            throw err
+        }
+    },
+
+    // Local state management for designer
+    initWorkflow() {
+      // Used for client-side only initialization if needed, or cleared
+      this.currentWorkflow = null
+      this.history = []
+      this.historyIndex = -1
     },
 
     setWorkflow(workflow: Workflow) {

@@ -30,27 +30,24 @@ A modern, extensible low-code platform built with Vue 3, TypeScript, and Vite. T
 *   **Workflow Engine**: [@vue-flow](https://vueflow.dev/)
 *   **Drag & Drop**: [vuedraggable](https://github.com/SortableJS/vue.draggable.next) (SortableJS)
 *   **Icons**: [Lucide Vue](https://lucide.dev/), Element Plus Icons
+*   **Backend**: [NestJS](https://nestjs.com/) (REST API, Swagger)
 
 ## 📂 Project Structure
 
 ```bash
-src/
-├── assets/             # Static assets
-├── components/         # Shared components
-│   ├── FlowCanvas.vue  # Workflow editor canvas
-│   ├── CustomNode.vue  # Custom node UI for workflow
+root/
+├── src/                # Frontend source code
+│   ├── components/     # Shared components
+│   ├── pages/          # Workflow module pages
+│   ├── views/          # Form Builder module
+│   ├── stores/         # Pinia state stores
 │   └── ...
-├── pages/              # Workflow module pages
-│   ├── WorkflowList.vue
-│   └── WorkflowDesigner.vue
-├── views/
-│   └── form-builder/   # Form Builder module
-│       ├── FormBuilder.vue
-│       └── components/ # Form specific components (Canvas, Library, Config)
-├── stores/             # Pinia state stores
-│   ├── workflow.ts     # Workflow state & history
-│   └── form.ts         # Form builder state
-├── types/              # TypeScript definitions
+├── backend/            # Backend source code (NestJS)
+│   ├── src/
+│   │   ├── workflows/  # Workflows module
+│   │   ├── forms/      # Forms module
+│   │   └── ...
+│   └── ...
 └── ...
 ```
 
@@ -60,12 +57,24 @@ src/
 *   Node.js (v18+ recommended)
 *   pnpm (recommended) or npm/yarn
 
-### Installation
+### Frontend Installation
 
-1.  **Clone the repository**
+1.  **Install dependencies**
     ```bash
-    git clone <repository-url>
-    cd flow2
+    pnpm install
+    ```
+
+2.  **Start development server**
+    ```bash
+    pnpm dev
+    ```
+    The application will be available at `http://localhost:5173`.
+
+### Backend Installation
+
+1.  **Navigate to backend directory**
+    ```bash
+    cd backend
     ```
 
 2.  **Install dependencies**
@@ -73,15 +82,23 @@ src/
     pnpm install
     ```
 
-3.  **Start development server**
+3.  **Start backend server**
     ```bash
-    pnpm dev
+    pnpm start:dev
     ```
-    The application will be available at `http://localhost:5173`.
+    The API will be available at `http://localhost:3000`.
+    API Documentation (Swagger) is available at `http://localhost:3000/api`.
 
 ### Build for Production
 
+**Frontend:**
 ```bash
+pnpm build
+```
+
+**Backend:**
+```bash
+cd backend
 pnpm build
 ```
 

@@ -5,21 +5,41 @@ import ComponentLibrary from './components/ComponentLibrary.vue'
 import FormCanvas from './components/FormCanvas.vue'
 import FormConfigPanel from './components/FormConfigPanel.vue'
 import { ArrowLeft, View, Download } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 const store = useFormStore()
 const router = useRouter()
+const route = useRoute()
 
 onMounted(() => {
-  store.initForm()
+  const id = route.params.id as string
+  if (id) {
+      store.fetchForm(id)
+  } else {
+      store.initForm()
+  }
 })
 
 const goBack = () => {
     router.push('/')
 }
 
-const handleSave = () => {
-    console.log('Save form', store.currentForm)
+const handleSave = async () => {
+    try {
+        if (store.currentForm?.id && store.currentForm.id.length > 10) {
+             // Assume ID length check or check if we are in create mode
+             // For simplicity, if we loaded from ID, update.
+             await store.saveForm()
+        } else {
+             // Create
+             const newForm = await store.createForm(store.currentForm?.name)
+             router.push(`/form-builder/${newForm.id}`)
+        }
+        ElMessage.success('Form saved successfully')
+    } catch (error) {
+        ElMessage.error('Failed to save form')
+    }
 }
 </script>
 
@@ -34,7 +54,7 @@ const handleSave = () => {
         <div class="flex items-center gap-2">
             <el-button :icon="View">Preview</el-button>
             <el-divider direction="vertical" />
-            <el-button type="primary" :icon="Download" @click="handleSave">Save</el-button>
+            <el-button type="primary" :icon="Download" @click="handleSave" :loading="store.loading">Save</el-button>
         </div>
     </div>
 
@@ -46,7 +66,10 @@ const handleSave = () => {
 
         <!-- Center: Canvas -->
         <div class="flex-1 bg-gray-100 relative overflow-hidden">
-            <FormCanvas />
+            <div v-if="store.loading && !store.currentForm" class="absolute inset-0 flex items-center justify-center z-50 bg-white/50">
+                Loading...
+            </div>
+            <FormCanvas v-else />
         </div>
 
         <!-- Right: Configuration -->
